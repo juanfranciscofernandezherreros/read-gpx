@@ -28,4 +28,4 @@ visualize:
 # Extrae los datos de un GPX y genera inmediatamente el mapa y el perfil.
 # Uso: make run-all GPX=actividad.gpx
 run-all:
-	$(VENV)/bin/read-gpx $(GPX) --visualize
+	$(VENV)/bin/read-gpx $(GPX)

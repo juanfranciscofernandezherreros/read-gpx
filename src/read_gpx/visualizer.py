@@ -186,3 +186,68 @@ def procesar_csv(
     print("\n--- PROCESO COMPLETADO ---")
     print(f"1. Abre '{archivo_mapa}' para ver la ruta en el mapa.")
     print(f"2. Revisa '{archivo_perfil}' para el gráfico de altitud.")
+
+
+def procesar_gpx(
+    archivo_gpx: str,
+    archivo_csv: str | None = None,
+    archivo_mapa: str | None = None,
+    archivo_perfil: str | None = None,
+) -> dict:
+    """Pipeline completo: GPX → CSV + mapa HTML + perfil de elevación PNG.
+
+    Lee el archivo GPX, guarda los datos en CSV y genera el mapa interactivo
+    y el perfil de elevación en un único paso.
+
+    Args:
+        archivo_gpx: Ruta al fichero ``.gpx`` de entrada.
+        archivo_csv: Ruta para el CSV de salida. Si no se indica, se deriva
+            del nombre del GPX sustituyendo la extensión por ``_data.csv``.
+        archivo_mapa: Ruta para el fichero HTML del mapa. Si no se indica,
+            se deriva del nombre del GPX añadiendo ``_mapa.html``.
+        archivo_perfil: Ruta para el PNG del perfil de elevación. Si no se
+            indica, se deriva del nombre del GPX añadiendo ``_elevacion.png``.
+
+    Returns:
+        Diccionario con las rutas de los ficheros generados bajo las claves
+        ``csv``, ``mapa`` y ``perfil``.
+
+    Examples:
+        >>> from read_gpx import procesar_gpx
+        >>> rutas = procesar_gpx("mi_actividad.gpx")
+        >>> print(rutas["mapa"])   # mi_actividad_mapa.html
+        >>> print(rutas["csv"])    # mi_actividad_data.csv
+    """
+    import os  # noqa: PLC0415
+
+    from read_gpx.parser import extraer_datos_gpx  # noqa: PLC0415
+
+    base = os.path.splitext(os.path.basename(archivo_gpx))[0]
+
+    if archivo_csv is None:
+        archivo_csv = os.path.join(os.path.dirname(archivo_gpx) or ".", f"{base}_data.csv")
+    if archivo_mapa is None:
+        archivo_mapa = os.path.join(os.path.dirname(archivo_gpx) or ".", f"{base}_mapa.html")
+    if archivo_perfil is None:
+        archivo_perfil = os.path.join(os.path.dirname(archivo_gpx) or ".", f"{base}_elevacion.png")
+
+    df = extraer_datos_gpx(archivo_gpx)
+    df.to_csv(archivo_csv, index=False)
+    print(f"CSV guardado en: {archivo_csv}")
+
+    df = calcular_distancia_acumulada(df)
+
+    distancia_total = df["distancia_km"].max()
+    desnivel = df["elevacion"].max() - df["elevacion"].min()
+    print(f"Distancia total calculada: {distancia_total:.2f} km")
+    print(f"Desnivel máximo: {desnivel:.2f} m")
+
+    crear_mapa_interactivo(df, archivo_mapa)
+    crear_perfil_elevacion(df, archivo_perfil)
+
+    print("\n--- PROCESO COMPLETADO ---")
+    print(f"1. CSV:      {archivo_csv}")
+    print(f"2. Mapa:     {archivo_mapa}")
+    print(f"3. Perfil:   {archivo_perfil}")
+
+    return {"csv": archivo_csv, "mapa": archivo_mapa, "perfil": archivo_perfil}
