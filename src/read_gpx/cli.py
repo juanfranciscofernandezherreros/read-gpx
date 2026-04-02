@@ -1,104 +1,82 @@
 """Punto de entrada CLI para la librería read-gpx.
 
-Expone dos comandos instalables vía ``pyproject.toml``:
+Expone un único comando instalable vía ``pyproject.toml``:
 
-* ``read-gpx`` – extrae datos de un GPX a CSV y, opcionalmente, visualiza.
-* ``dibujar-ruta`` – genera mapa y perfil de elevación desde un CSV.
+* ``read-gpx`` – lee un GPX y genera CSV, mapa HTML y perfil de elevación
+  en un directorio de salida.
+
+Uso::
+
+    read-gpx actividad.gpx
+    read-gpx actividad.gpx -o mi_salida/
 """
 
+import argparse
 import os
 import sys
 
-from read_gpx.parser import extraer_datos_gpx
 
+def main():
+    """Procesa un archivo GPX y guarda CSV, mapa HTML y perfil en un directorio.
 
-def main(archivo=None, visualizar=True):
-    """Procesa un archivo GPX y genera CSV, mapa HTML y perfil de elevación.
+    Uso::
 
-    Cuando se llama desde la línea de comandos acepta los siguientes
-    argumentos posicionales/opcionales::
+        read-gpx <archivo.gpx> [-o DIRECTORIO_SALIDA]
 
-        read-gpx [archivo.gpx] [--no-visualize]
-
-    Por defecto genera los tres ficheros de salida (CSV, HTML y PNG). Pasa
-    ``--no-visualize`` para producir únicamente el CSV.
-
-    Args:
-        archivo: Ruta al archivo GPX. Si no se proporciona, se usa el
-            primer argumento de la línea de comandos o ``actividad.gpx``
-            por defecto.
-        visualizar: Si es ``True`` (valor por defecto), ejecuta también la
-            generación del mapa y el perfil de elevación tras guardar el CSV.
-            Pasa ``False`` para generar sólo el CSV.
+    Si no se indica ``-o``, los ficheros se guardan en un directorio llamado
+    ``<nombre_gpx>_salida/`` creado junto al archivo GPX.
     """
-    args = sys.argv[1:]
+    parser = argparse.ArgumentParser(
+        prog="read-gpx",
+        description="Lee un GPX y genera CSV + mapa HTML + perfil de elevación en un directorio.",
+    )
+    parser.add_argument("archivo", help="Ruta al fichero .gpx de entrada")
+    parser.add_argument(
+        "-o", "--output-dir",
+        dest="output_dir",
+        default=None,
+        help="Directorio donde guardar los ficheros generados (se crea si no existe)",
+    )
+    args = parser.parse_args()
 
-    if archivo is None:
-        positional = [a for a in args if not a.startswith("--")]
-        archivo = positional[0] if positional else "actividad.gpx"
-
-    if "--no-visualize" in args:
-        visualizar = False
+    archivo = args.archivo
 
     if not os.path.exists(archivo):
-        print(f"Error: No se encontró el archivo '{archivo}'")
+        print(f"Error: no se encontró el archivo '{archivo}'")
         sys.exit(1)
 
-    print(f"--- Procesando {archivo} ---")
-    df_final = extraer_datos_gpx(archivo)
+    base = os.path.splitext(os.path.basename(archivo))[0]
+    gpx_dir = os.path.dirname(os.path.abspath(archivo))
 
-    print(df_final.head())
+    if args.output_dir:
+        directorio_salida = args.output_dir
+    else:
+        directorio_salida = os.path.join(gpx_dir, f"{base}_salida")
 
-    nombre_csv = archivo.replace(".gpx", "_data.csv")
-    df_final.to_csv(nombre_csv, index=False)
-    print(f"\n--- Extracción completada. Datos guardados en: {nombre_csv} ---")
+    os.makedirs(directorio_salida, exist_ok=True)
 
-    if visualizar:
-        from read_gpx.visualizer import procesar_csv  # noqa: PLC0415
+    archivo_csv = os.path.join(directorio_salida, f"{base}_data.csv")
+    archivo_mapa = os.path.join(directorio_salida, f"{base}_mapa.html")
+    archivo_perfil = os.path.join(directorio_salida, f"{base}_elevacion.png")
 
-        base = os.path.splitext(os.path.basename(archivo))[0]
-        print("\n--- Iniciando visualización ---")
-        procesar_csv(
-            nombre_csv,
-            archivo_mapa=f"{base}_mapa.html",
-            archivo_perfil=f"{base}_elevacion.png",
-        )
+    print(f"Procesando: {archivo}")
+    print(f"Directorio de salida: {directorio_salida}")
 
+    from read_gpx.parser import extraer_datos_gpx  # noqa: PLC0415
+    from read_gpx.visualizer import calcular_distancia_acumulada, crear_mapa_interactivo, crear_perfil_elevacion  # noqa: PLC0415
 
-def dibujar_ruta(archivo_csv=None):
-    """Genera el mapa interactivo y el perfil de elevación desde un CSV.
+    df = extraer_datos_gpx(archivo)
+    df.to_csv(archivo_csv, index=False)
+    print(f"  CSV guardado:   {archivo_csv}")
 
-    Acepta la ruta al CSV como primer argumento de la línea de comandos.
+    df = calcular_distancia_acumulada(df)
+    crear_mapa_interactivo(df, archivo_mapa)
+    print(f"  Mapa guardado:  {archivo_mapa}")
 
-    Args:
-        archivo_csv: Ruta al fichero CSV generado por ``read-gpx``. Si no
-            se proporciona, se usa el primer argumento de la línea de
-            comandos.
-    """
-    import glob  # noqa: PLC0415
+    crear_perfil_elevacion(df, archivo_perfil)
+    print(f"  Perfil guardado: {archivo_perfil}")
 
-    from read_gpx.visualizer import procesar_csv  # noqa: PLC0415
-
-    if archivo_csv is None:
-        if len(sys.argv) > 1:
-            archivo_csv = sys.argv[1]
-        else:
-            candidatos = glob.glob("*_data.csv")
-            if not candidatos:
-                print("Error: no se encontró ningún fichero *_data.csv.")
-                print("Uso: dibujar-ruta <archivo.csv>")
-                sys.exit(1)
-            archivo_csv = candidatos[0]
-            print(f"Usando fichero: {archivo_csv}")
-
-    base = os.path.splitext(os.path.basename(archivo_csv))[0]
-    if base.endswith("_data"):
-        base = base[:-5]
-    procesar_csv(
-        archivo_csv,
-        archivo_mapa=f"{base}_mapa.html",
-        archivo_perfil=f"{base}_elevacion.png",
-    )
+    print("\n¡Listo! Todos los ficheros están en:", directorio_salida)
 
 
 if __name__ == "__main__":

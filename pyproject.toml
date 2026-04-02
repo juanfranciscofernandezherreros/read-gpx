@@ -33,7 +33,6 @@ dependencies = [
 
 [project.scripts]
 read-gpx = "read_gpx.cli:main"
-dibujar-ruta = "read_gpx.cli:dibujar_ruta"
 
 [project.optional-dependencies]
 dev = [
