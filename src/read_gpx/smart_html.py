@@ -97,7 +97,7 @@ def _formatear_duracion(segundos: float) -> str:
     partes = []
     if h > 0:
         partes.append(f"{h}h")
-    if m > 0 or h > 0:
+    if m > 0:
         partes.append(f"{m}m")
     partes.append(f"{s}s")
     return " ".join(partes)

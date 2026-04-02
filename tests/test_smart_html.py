@@ -60,6 +60,11 @@ def test_formatear_duracion_horas():
     assert _formatear_duracion(3661) == "1h 1m 1s"
 
 
+def test_formatear_duracion_horas_sin_minutos():
+    """Verifica formato con horas y segundos pero sin minutos."""
+    assert _formatear_duracion(3605) == "1h 5s"
+
+
 def test_formatear_duracion_minutos():
     """Verifica formato solo con minutos y segundos."""
     assert _formatear_duracion(125) == "2m 5s"
@@ -104,10 +109,16 @@ def test_calcular_estadisticas_nombre_track(sample_df):
 
 
 def test_generar_perfil_base64(sample_df):
-    """Verifica que el perfil se genera como base64 válido."""
+    """Verifica que el perfil se genera como base64 válido de imagen PNG."""
+    import base64 as b64mod
+
     b64 = _generar_perfil_base64(sample_df)
     assert isinstance(b64, str)
     assert len(b64) > 100  # debe ser una imagen real
+
+    # Validar que es base64 decodificable y empieza con la firma PNG
+    raw = b64mod.b64decode(b64)
+    assert raw[:8] == b"\x89PNG\r\n\x1a\n"
 
 
 def test_generar_mapa_html(sample_df):
