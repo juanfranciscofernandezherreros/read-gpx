@@ -134,12 +134,24 @@ def crear_perfil_elevacion(df: pd.DataFrame, archivo_salida: str = "perfil_eleva
     return archivo_salida
 
 
-def procesar_csv(archivo_csv: str, prefijo_salida: str = "") -> None:
+def procesar_csv(
+    archivo_csv: str,
+    prefijo_salida: str = "",
+    archivo_mapa: str | None = None,
+    archivo_perfil: str | None = None,
+) -> None:
     """Carga un CSV generado por ``read-gpx`` y produce el mapa y el perfil.
 
     Args:
         archivo_csv: Ruta al fichero CSV con los datos de la ruta.
-        prefijo_salida: Prefijo opcional para los ficheros de salida.
+        prefijo_salida: Prefijo opcional para los ficheros de salida (ignorado
+            si se proporcionan ``archivo_mapa`` o ``archivo_perfil``).
+        archivo_mapa: Ruta explícita para el fichero HTML del mapa. Si no se
+            indica, se deriva de ``prefijo_salida`` o se usa el valor por
+            defecto ``mapa_interactivo.html``.
+        archivo_perfil: Ruta explícita para el fichero PNG del perfil. Si no
+            se indica, se deriva de ``prefijo_salida`` o se usa el valor por
+            defecto ``perfil_elevacion.png``.
     """
     df = pd.read_csv(archivo_csv)
     df = calcular_distancia_acumulada(df)
@@ -149,12 +161,14 @@ def procesar_csv(archivo_csv: str, prefijo_salida: str = "") -> None:
     print(f"Distancia total calculada: {distancia_total:.2f} km")
     print(f"Desnivel máximo: {desnivel:.2f} m")
 
-    mapa_html = f"{prefijo_salida}mapa_interactivo.html" if prefijo_salida else "mapa_interactivo.html"
-    perfil_png = f"{prefijo_salida}perfil_elevacion.png" if prefijo_salida else "perfil_elevacion.png"
+    if archivo_mapa is None:
+        archivo_mapa = f"{prefijo_salida}mapa_interactivo.html" if prefijo_salida else "mapa_interactivo.html"
+    if archivo_perfil is None:
+        archivo_perfil = f"{prefijo_salida}perfil_elevacion.png" if prefijo_salida else "perfil_elevacion.png"
 
-    crear_mapa_interactivo(df, mapa_html)
-    crear_perfil_elevacion(df, perfil_png)
+    crear_mapa_interactivo(df, archivo_mapa)
+    crear_perfil_elevacion(df, archivo_perfil)
 
     print("\n--- PROCESO COMPLETADO ---")
-    print(f"1. Abre '{mapa_html}' para ver la ruta en el mapa.")
-    print(f"2. Revisa '{perfil_png}' para el gráfico de altitud.")
+    print(f"1. Abre '{archivo_mapa}' para ver la ruta en el mapa.")
+    print(f"2. Revisa '{archivo_perfil}' para el gráfico de altitud.")
