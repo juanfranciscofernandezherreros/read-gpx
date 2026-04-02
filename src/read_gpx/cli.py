@@ -1,4 +1,10 @@
-"""Punto de entrada CLI para read-gpx."""
+"""Punto de entrada CLI para la librería read-gpx.
+
+Expone dos comandos instalables vía ``pyproject.toml``:
+
+* ``read-gpx`` – extrae datos de un GPX a CSV y, opcionalmente, visualiza.
+* ``dibujar-ruta`` – genera mapa y perfil de elevación desde un CSV.
+"""
 
 import os
 import sys

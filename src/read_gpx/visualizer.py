@@ -1,4 +1,18 @@
-"""Módulo de visualización para rutas GPX exportadas a CSV."""
+"""Módulo de visualización para rutas GPX exportadas a CSV.
+
+Proporciona tres funciones independientes y una función de pipeline:
+
+* :func:`calcular_distancia_acumulada` – calcula la distancia acumulada.
+* :func:`crear_mapa_interactivo` – genera un mapa HTML interactivo.
+* :func:`crear_perfil_elevacion` – genera un gráfico PNG de elevación.
+* :func:`procesar_csv` – pipeline completo: CSV → mapa + perfil.
+
+Ejemplo::
+
+    from read_gpx import procesar_csv
+
+    procesar_csv("mi_actividad_data.csv")
+"""
 
 import pandas as pd
 import folium
