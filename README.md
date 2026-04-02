@@ -1,9 +1,33 @@
 # read-gpx
 
-Herramienta en Python para extraer datos de archivos GPX y convertirlos a CSV.
+Herramienta en Python para extraer datos de archivos GPX y convertirlos a CSV
+y generar automáticamente un mapa interactivo y un perfil de elevación.
 
 Lee tracks de archivos GPX y extrae coordenadas, elevación, tiempo y extensiones
 de dispositivos de fitness (frecuencia cardíaca, cadencia y temperatura).
+
+## Pipeline completo (un solo comando)
+
+Pasa tu archivo GPX y el programa hace todo: extrae los datos a CSV **y** genera
+el mapa web y el gráfico de elevación.
+
+```bash
+read-gpx mi_actividad.gpx --visualize
+```
+
+Esto genera tres ficheros en el mismo directorio:
+
+| Fichero                      | Descripción                              |
+|------------------------------|------------------------------------------|
+| `mi_actividad_data.csv`      | Todos los puntos del track en CSV        |
+| `mi_actividad_mapa.html`     | Mapa interactivo (abre en el navegador)  |
+| `mi_actividad_elevacion.png` | Gráfico del perfil de elevación          |
+
+También puedes usar el atajo de `make`:
+
+```bash
+make run-all GPX=mi_actividad.gpx
+```
 
 ## Requisitos
 
@@ -37,8 +61,14 @@ pip install .
 ### Línea de comandos
 
 ```bash
-# Procesar un archivo GPX concreto
+# Pipeline completo: GPX → CSV + mapa HTML + gráfico de elevación
+read-gpx mi_actividad.gpx --visualize
+
+# Solo extraer datos a CSV
 read-gpx mi_actividad.gpx
+
+# Generar mapa y gráfico a partir de un CSV ya existente
+dibujar-ruta mi_actividad_data.csv
 
 # O ejecutar directamente el script original
 python extraer_gpx.py
@@ -85,11 +115,14 @@ read-gpx/
 │   └── read_gpx/
 │       ├── __init__.py
 │       ├── parser.py      # Lógica de extracción de datos GPX
-│       └── cli.py          # Punto de entrada de línea de comandos
+│       ├── visualizer.py  # Generación de mapa HTML y perfil de elevación
+│       └── cli.py         # Punto de entrada de línea de comandos
 ├── tests/
 │   └── test_parser.py     # Tests unitarios
 ├── extraer_gpx.py          # Script original independiente
-├── pyproject.toml           # Configuración del proyecto
-├── requirements.txt         # Dependencias
+├── dibujar_ruta.py         # Script original de visualización
+├── Makefile                # Atajos (setup, test, run-all…)
+├── pyproject.toml          # Configuración del proyecto
+├── requirements.txt        # Dependencias
 └── README.md
 ```

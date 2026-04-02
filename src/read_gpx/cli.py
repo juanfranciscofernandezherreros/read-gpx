@@ -46,8 +46,13 @@ def main(archivo=None, visualizar=False):
     if visualizar:
         from read_gpx.visualizer import procesar_csv  # noqa: PLC0415
 
+        base = os.path.splitext(os.path.basename(archivo))[0]
         print("\n--- Iniciando visualización ---")
-        procesar_csv(nombre_csv)
+        procesar_csv(
+            nombre_csv,
+            archivo_mapa=f"{base}_mapa.html",
+            archivo_perfil=f"{base}_elevacion.png",
+        )
 
 
 def dibujar_ruta(archivo_csv=None):
@@ -76,7 +81,14 @@ def dibujar_ruta(archivo_csv=None):
             archivo_csv = candidatos[0]
             print(f"Usando fichero: {archivo_csv}")
 
-    procesar_csv(archivo_csv)
+    base = os.path.splitext(os.path.basename(archivo_csv))[0]
+    if base.endswith("_data"):
+        base = base[:-5]
+    procesar_csv(
+        archivo_csv,
+        archivo_mapa=f"{base}_mapa.html",
+        archivo_perfil=f"{base}_elevacion.png",
+    )
 
 
 if __name__ == "__main__":
