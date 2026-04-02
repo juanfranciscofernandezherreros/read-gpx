@@ -1,41 +1,17 @@
 # read-gpx
 
-Herramienta en Python para extraer datos de archivos GPX y convertirlos a CSV
-y generar automáticamente un mapa interactivo y un perfil de elevación.
+**Librería Python** para extraer, analizar y visualizar datos de archivos GPX.
 
-Lee tracks de archivos GPX y extrae coordenadas, elevación, tiempo y extensiones
-de dispositivos de fitness (frecuencia cardíaca, cadencia y temperatura).
+Lee tracks de archivos GPX y devuelve un `DataFrame` de pandas con coordenadas,
+elevación, tiempo y extensiones de dispositivos de fitness (frecuencia cardíaca,
+cadencia y temperatura). Incluye además herramientas para generar mapas
+interactivos y perfiles de elevación.
 
-## Pipeline completo (un solo comando)
-
-Pasa tu archivo GPX y el programa hace todo: extrae los datos a CSV **y** genera
-el mapa web y el gráfico de elevación.
-
-```bash
-read-gpx mi_actividad.gpx --visualize
-```
-
-Esto genera tres ficheros en el mismo directorio:
-
-| Fichero                      | Descripción                              |
-|------------------------------|------------------------------------------|
-| `mi_actividad_data.csv`      | Todos los puntos del track en CSV        |
-| `mi_actividad_mapa.html`     | Mapa interactivo (abre en el navegador)  |
-| `mi_actividad_elevacion.png` | Gráfico del perfil de elevación          |
-
-También puedes usar el atajo de `make`:
-
-```bash
-make run-all GPX=mi_actividad.gpx
-```
-
-## Requisitos
-
-- Python 3.9 o superior
+---
 
 ## Instalación
 
-Los sistemas Debian/Ubuntu modernos (Python 3.12+) gestionan el entorno de Python de forma externa y no permiten instalar paquetes con `pip` directamente. Usa un entorno virtual:
+### Desde el repositorio (modo editable)
 
 ```bash
 # Clonar el repositorio
@@ -53,76 +29,222 @@ source .venv/bin/activate
 # Opción 3 – manualmente
 python3 -m venv .venv
 source .venv/bin/activate
-pip install .
+pip install -e .
 ```
 
-## Uso
+### Requisitos
 
-### Línea de comandos
+- Python 3.9 o superior
+- Las dependencias se instalan automáticamente: `gpxpy`, `pandas`, `folium`,
+  `matplotlib`, `geopy`
 
-```bash
-# Pipeline completo: GPX → CSV + mapa HTML + gráfico de elevación
-read-gpx mi_actividad.gpx --visualize
+---
 
-# Solo extraer datos a CSV
-read-gpx mi_actividad.gpx
+## Uso como librería Python
 
-# Generar mapa y gráfico a partir de un CSV ya existente
-dibujar-ruta mi_actividad_data.csv
-
-# O ejecutar directamente el script original
-python extraer_gpx.py
-```
-
-### Como librería
+### Extraer datos de un GPX
 
 ```python
-from read_gpx.parser import extraer_datos_gpx
+from read_gpx import extraer_datos_gpx
 
 df = extraer_datos_gpx("mi_actividad.gpx")
 print(df.head())
 ```
 
-El DataFrame resultante contiene las columnas:
+El DataFrame devuelto contiene las siguientes columnas:
 
-| Columna        | Descripción                              |
-|----------------|------------------------------------------|
-| `latitud`      | Latitud del punto                        |
-| `longitud`     | Longitud del punto                       |
-| `elevacion`    | Elevación en metros                      |
-| `tiempo`       | Marca de tiempo (`datetime`)             |
-| `nombre_track` | Nombre del track                         |
-| `hr`           | Frecuencia cardíaca (si está disponible) |
-| `cad`          | Cadencia (si está disponible)            |
-| `atemp`        | Temperatura ambiente (si está disponible)|
+| Columna        | Tipo               | Descripción                               |
+|----------------|--------------------|-------------------------------------------|
+| `latitud`      | `float`            | Latitud decimal del punto                 |
+| `longitud`     | `float`            | Longitud decimal del punto                |
+| `elevacion`    | `float` / `None`   | Elevación en metros                       |
+| `tiempo`       | `datetime64` / NaT | Marca de tiempo UTC                       |
+| `nombre_track` | `str`              | Nombre del track en el fichero GPX        |
+| `hr`           | `str` *(opcional)* | Frecuencia cardíaca en bpm                |
+| `cad`          | `str` *(opcional)* | Cadencia en rpm                           |
+| `atemp`        | `str` *(opcional)* | Temperatura ambiente en °C                |
+
+### Calcular distancia acumulada
+
+```python
+from read_gpx import extraer_datos_gpx, calcular_distancia_acumulada
+
+df = extraer_datos_gpx("mi_actividad.gpx")
+df = calcular_distancia_acumulada(df)
+print(f"Distancia total: {df['distancia_km'].max():.2f} km")
+```
+
+### Generar mapa interactivo
+
+```python
+from read_gpx import extraer_datos_gpx, calcular_distancia_acumulada, crear_mapa_interactivo
+
+df = extraer_datos_gpx("mi_actividad.gpx")
+df = calcular_distancia_acumulada(df)
+crear_mapa_interactivo(df, "mapa.html")
+```
+
+### Generar perfil de elevación
+
+```python
+from read_gpx import extraer_datos_gpx, crear_perfil_elevacion
+
+df = extraer_datos_gpx("mi_actividad.gpx")
+crear_perfil_elevacion(df, "perfil.png")
+```
+
+### Pipeline completo desde un CSV
+
+```python
+from read_gpx import procesar_csv
+
+# Genera mapa HTML + PNG de elevación a partir de un CSV ya existente
+procesar_csv("mi_actividad_data.csv")
+
+# Con rutas de salida personalizadas
+procesar_csv(
+    "mi_actividad_data.csv",
+    archivo_mapa="mi_mapa.html",
+    archivo_perfil="mi_perfil.png",
+)
+```
+
+---
+
+## Uso desde la línea de comandos
+
+### Pipeline completo: GPX → CSV + mapa + perfil
+
+```bash
+read-gpx mi_actividad.gpx --visualize
+```
+
+Genera tres ficheros en el directorio actual:
+
+| Fichero                      | Descripción                              |
+|------------------------------|------------------------------------------|
+| `mi_actividad_data.csv`      | Todos los puntos del track en CSV        |
+| `mi_actividad_mapa.html`     | Mapa interactivo (abrir en el navegador) |
+| `mi_actividad_elevacion.png` | Gráfico del perfil de elevación          |
+
+### Solo extraer datos a CSV
+
+```bash
+read-gpx mi_actividad.gpx
+```
+
+### Generar mapa y perfil desde un CSV ya existente
+
+```bash
+dibujar-ruta mi_actividad_data.csv
+```
+
+### Atajos con make
+
+```bash
+# Pipeline completo
+make run-all GPX=mi_actividad.gpx
+
+# Solo visualización desde un CSV
+make visualize CSV=mi_actividad_data.csv
+```
+
+---
+
+## Referencia de la API pública
+
+### `extraer_datos_gpx(archivo_entrada)`
+
+Parsea un fichero GPX y devuelve un `pandas.DataFrame`.
+
+| Parámetro        | Tipo  | Descripción                |
+|------------------|-------|----------------------------|
+| `archivo_entrada` | `str` | Ruta al fichero `.gpx`    |
+
+**Raises:** `FileNotFoundError` si el fichero no existe.
+
+---
+
+### `calcular_distancia_acumulada(df)`
+
+Añade la columna `distancia_km` al DataFrame usando la fórmula geodésica
+(Haversine).
+
+| Parámetro | Tipo               | Descripción                              |
+|-----------|--------------------|------------------------------------------|
+| `df`      | `pd.DataFrame`     | DataFrame con columnas `latitud`/`longitud` |
+
+**Returns:** una copia del DataFrame con la columna `distancia_km` añadida.
+
+---
+
+### `crear_mapa_interactivo(df, archivo_salida)`
+
+Genera un mapa HTML interactivo con capas satélite y topográfica.
+
+| Parámetro        | Tipo           | Por defecto              |
+|------------------|----------------|--------------------------|
+| `df`             | `pd.DataFrame` | —                        |
+| `archivo_salida` | `str`          | `"mapa_interactivo.html"` |
+
+**Returns:** ruta del fichero HTML generado.
+
+---
+
+### `crear_perfil_elevacion(df, archivo_salida)`
+
+Genera un gráfico PNG con el perfil de elevación de la ruta.
+
+| Parámetro        | Tipo           | Por defecto             |
+|------------------|----------------|-------------------------|
+| `df`             | `pd.DataFrame` | —                       |
+| `archivo_salida` | `str`          | `"perfil_elevacion.png"` |
+
+**Returns:** ruta del fichero PNG generado.
+
+---
+
+### `procesar_csv(archivo_csv, archivo_mapa, archivo_perfil)`
+
+Pipeline completo: carga el CSV y genera el mapa y el perfil de elevación.
+
+| Parámetro       | Tipo            | Por defecto                |
+|-----------------|-----------------|----------------------------|
+| `archivo_csv`   | `str`           | —                          |
+| `archivo_mapa`  | `str` / `None`  | `"mapa_interactivo.html"`  |
+| `archivo_perfil`| `str` / `None`  | `"perfil_elevacion.png"`   |
+
+---
 
 ## Desarrollo
 
 ```bash
-# Crear el entorno virtual e instalar dependencias de desarrollo
+# Configurar entorno y dependencias de desarrollo
 bash setup.sh          # o: make setup
 source .venv/bin/activate
 
-# Ejecutar tests
+# Ejecutar la suite de tests
 pytest                 # o: make test
 ```
 
-## Estructura del proyecto
+### Estructura del proyecto
 
 ```
 read-gpx/
 ├── src/
 │   └── read_gpx/
-│       ├── __init__.py
-│       ├── parser.py      # Lógica de extracción de datos GPX
-│       ├── visualizer.py  # Generación de mapa HTML y perfil de elevación
-│       └── cli.py         # Punto de entrada de línea de comandos
+│       ├── __init__.py      # API pública de la librería
+│       ├── parser.py        # Extracción de datos GPX → DataFrame
+│       ├── visualizer.py    # Mapa HTML y perfil de elevación
+│       └── cli.py           # Comandos de línea de comandos
 ├── tests/
-│   └── test_parser.py     # Tests unitarios
-├── extraer_gpx.py          # Script original independiente
-├── dibujar_ruta.py         # Script original de visualización
-├── Makefile                # Atajos (setup, test, run-all…)
-├── pyproject.toml          # Configuración del proyecto
-├── requirements.txt        # Dependencias
+│   └── test_parser.py       # Tests unitarios del parser
+├── extraer_gpx.py           # Script original (standalone)
+├── dibujar_ruta.py          # Script original de visualización (standalone)
+├── Makefile                 # Atajos: setup, test, run-all, visualize
+├── pyproject.toml           # Metadatos del paquete y dependencias
+├── requirements.txt         # Dependencias (referencia)
+├── setup.sh                 # Script de configuración del entorno
 └── README.md
 ```
+
