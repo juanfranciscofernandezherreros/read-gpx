@@ -47,11 +47,12 @@ pip install -e .
 ```python
 from read_gpx import procesar_gpx
 
-# Genera CSV + mapa HTML + perfil PNG en una sola llamada
+# Genera CSV + mapa HTML + perfil PNG + resumen HTML inteligente en una sola llamada
 rutas = procesar_gpx("mi_actividad.gpx")
-print(rutas["csv"])     # mi_actividad_data.csv
-print(rutas["mapa"])    # mi_actividad_mapa.html
-print(rutas["perfil"])  # mi_actividad_elevacion.png
+print(rutas["csv"])      # mi_actividad_data.csv
+print(rutas["mapa"])     # mi_actividad_mapa.html
+print(rutas["perfil"])   # mi_actividad_elevacion.png
+print(rutas["resumen"])  # mi_actividad_resumen.html
 
 # Con rutas de salida personalizadas
 rutas = procesar_gpx(
@@ -59,6 +60,7 @@ rutas = procesar_gpx(
     archivo_csv="datos.csv",
     archivo_mapa="mapa.html",
     archivo_perfil="perfil.png",
+    archivo_resumen="resumen.html",
 )
 ```
 
@@ -104,6 +106,16 @@ df = calcular_distancia_acumulada(df)
 crear_mapa_interactivo(df, "mapa.html")
 ```
 
+### Generar HTML inteligente (dashboard completo)
+
+```python
+from read_gpx import extraer_datos_gpx, crear_html_inteligente
+
+df = extraer_datos_gpx("mi_actividad.gpx")
+crear_html_inteligente(df, "resumen.html")
+# Genera un único HTML con mapa interactivo + perfil de elevación + estadísticas
+```
+
 ### Generar perfil de elevación
 
 ```python
@@ -139,13 +151,14 @@ procesar_csv(
 read-gpx mi_actividad.gpx
 ```
 
-Genera tres ficheros en el directorio actual:
+Genera cuatro ficheros en un directorio de salida:
 
-| Fichero                      | Descripción                              |
-|------------------------------|------------------------------------------|
-| `mi_actividad_data.csv`      | Todos los puntos del track en CSV        |
-| `mi_actividad_mapa.html`     | Mapa interactivo (abrir en el navegador) |
-| `mi_actividad_elevacion.png` | Gráfico del perfil de elevación          |
+| Fichero                      | Descripción                                             |
+|------------------------------|---------------------------------------------------------|
+| `mi_actividad_data.csv`      | Todos los puntos del track en CSV                       |
+| `mi_actividad_mapa.html`     | Mapa interactivo (abrir en el navegador)                |
+| `mi_actividad_elevacion.png` | Gráfico del perfil de elevación                         |
+| `mi_actividad_resumen.html`  | **HTML inteligente** con mapa + perfil + estadísticas   |
 
 ### Solo extraer datos a CSV (sin generar mapa)
 
@@ -167,6 +180,23 @@ make run-all GPX=mi_actividad.gpx
 
 # Solo visualización desde un CSV
 make visualize CSV=mi_actividad_data.csv
+
+# Procesar todos los GPX de un directorio
+make run-dir DIR=mis_rutas/
+make run-dir DIR=mis_rutas/ OUT=resultados/
+```
+
+### Procesar todos los GPX de un directorio
+
+```bash
+# Procesa cada .gpx y genera CSV + mapa + perfil + resumen HTML inteligente
+bash procesar_directorio.sh mis_rutas/
+
+# Con directorio de salida personalizado
+bash procesar_directorio.sh mis_rutas/ -o resultados/
+
+# Ayuda
+bash procesar_directorio.sh --help
 ```
 
 ---
@@ -224,6 +254,21 @@ Genera un gráfico PNG con el perfil de elevación de la ruta.
 
 ---
 
+### `crear_html_inteligente(df, archivo_salida)`
+
+Genera un único fichero HTML inteligente con mapa interactivo, perfil de
+elevación incrustado y tarjetas de estadísticas (distancia, desnivel,
+duración, velocidad media, etc.).
+
+| Parámetro        | Tipo           | Por defecto           |
+|------------------|----------------|-----------------------|
+| `df`             | `pd.DataFrame` | —                     |
+| `archivo_salida` | `str`          | `"resumen_ruta.html"` |
+
+**Returns:** ruta del fichero HTML generado.
+
+---
+
 ### `procesar_csv(archivo_csv, archivo_mapa, archivo_perfil)`
 
 Pipeline completo: carga el CSV y genera el mapa y el perfil de elevación.
@@ -256,12 +301,16 @@ read-gpx/
 │       ├── __init__.py      # API pública de la librería
 │       ├── parser.py        # Extracción de datos GPX → DataFrame
 │       ├── visualizer.py    # Mapa HTML y perfil de elevación
+│       ├── smart_html.py    # HTML inteligente (dashboard completo)
 │       └── cli.py           # Comandos de línea de comandos
 ├── tests/
-│   └── test_parser.py       # Tests unitarios del parser
+│   ├── test_parser.py       # Tests unitarios del parser
+│   ├── test_visualizer.py   # Tests del visualizador
+│   └── test_smart_html.py   # Tests del HTML inteligente
 ├── extraer_gpx.py           # Script original (standalone)
 ├── dibujar_ruta.py          # Script original de visualización (standalone)
-├── Makefile                 # Atajos: setup, test, run-all, visualize
+├── procesar_directorio.sh   # Procesa todos los GPX de un directorio
+├── Makefile                 # Atajos: setup, test, run-all, run-dir, visualize
 ├── pyproject.toml           # Metadatos del paquete y dependencias
 ├── requirements.txt         # Dependencias (referencia)
 ├── setup.sh                 # Script de configuración del entorno

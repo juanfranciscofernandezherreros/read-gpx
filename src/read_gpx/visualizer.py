@@ -193,11 +193,12 @@ def procesar_gpx(
     archivo_csv: str | None = None,
     archivo_mapa: str | None = None,
     archivo_perfil: str | None = None,
+    archivo_resumen: str | None = None,
 ) -> dict:
-    """Pipeline completo: GPX → CSV + mapa HTML + perfil de elevación PNG.
+    """Pipeline completo: GPX → CSV + mapa HTML + perfil de elevación PNG + resumen HTML inteligente.
 
-    Lee el archivo GPX, guarda los datos en CSV y genera el mapa interactivo
-    y el perfil de elevación en un único paso.
+    Lee el archivo GPX, guarda los datos en CSV y genera el mapa interactivo,
+    el perfil de elevación y un resumen HTML inteligente en un único paso.
 
     Args:
         archivo_gpx: Ruta al fichero ``.gpx`` de entrada.
@@ -207,20 +208,23 @@ def procesar_gpx(
             se deriva del nombre del GPX añadiendo ``_mapa.html``.
         archivo_perfil: Ruta para el PNG del perfil de elevación. Si no se
             indica, se deriva del nombre del GPX añadiendo ``_elevacion.png``.
+        archivo_resumen: Ruta para el HTML inteligente de resumen. Si no se
+            indica, se deriva del nombre del GPX añadiendo ``_resumen.html``.
 
     Returns:
         Diccionario con las rutas de los ficheros generados bajo las claves
-        ``csv``, ``mapa`` y ``perfil``.
+        ``csv``, ``mapa``, ``perfil`` y ``resumen``.
 
     Examples:
         >>> from read_gpx import procesar_gpx
         >>> rutas = procesar_gpx("mi_actividad.gpx")
-        >>> print(rutas["mapa"])   # mi_actividad_mapa.html
-        >>> print(rutas["csv"])    # mi_actividad_data.csv
+        >>> print(rutas["mapa"])     # mi_actividad_mapa.html
+        >>> print(rutas["resumen"])  # mi_actividad_resumen.html
     """
     import os  # noqa: PLC0415
 
     from read_gpx.parser import extraer_datos_gpx  # noqa: PLC0415
+    from read_gpx.smart_html import crear_html_inteligente  # noqa: PLC0415
 
     base = os.path.splitext(os.path.basename(archivo_gpx))[0]
 
@@ -230,6 +234,8 @@ def procesar_gpx(
         archivo_mapa = os.path.join(os.path.dirname(archivo_gpx) or ".", f"{base}_mapa.html")
     if archivo_perfil is None:
         archivo_perfil = os.path.join(os.path.dirname(archivo_gpx) or ".", f"{base}_elevacion.png")
+    if archivo_resumen is None:
+        archivo_resumen = os.path.join(os.path.dirname(archivo_gpx) or ".", f"{base}_resumen.html")
 
     df = extraer_datos_gpx(archivo_gpx)
     df.to_csv(archivo_csv, index=False)
@@ -244,10 +250,12 @@ def procesar_gpx(
 
     crear_mapa_interactivo(df, archivo_mapa)
     crear_perfil_elevacion(df, archivo_perfil)
+    crear_html_inteligente(df, archivo_resumen)
 
     print("\n--- PROCESO COMPLETADO ---")
     print(f"1. CSV:      {archivo_csv}")
     print(f"2. Mapa:     {archivo_mapa}")
     print(f"3. Perfil:   {archivo_perfil}")
+    print(f"4. Resumen:  {archivo_resumen}")
 
-    return {"csv": archivo_csv, "mapa": archivo_mapa, "perfil": archivo_perfil}
+    return {"csv": archivo_csv, "mapa": archivo_mapa, "perfil": archivo_perfil, "resumen": archivo_resumen}

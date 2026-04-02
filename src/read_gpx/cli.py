@@ -63,6 +63,7 @@ def main():
     print(f"Directorio de salida: {directorio_salida}")
 
     from read_gpx.parser import extraer_datos_gpx  # noqa: PLC0415
+    from read_gpx.smart_html import crear_html_inteligente  # noqa: PLC0415
     from read_gpx.visualizer import calcular_distancia_acumulada, crear_mapa_interactivo, crear_perfil_elevacion  # noqa: PLC0415
 
     df = extraer_datos_gpx(archivo)
@@ -75,6 +76,10 @@ def main():
 
     crear_perfil_elevacion(df, archivo_perfil)
     print(f"  Perfil guardado: {archivo_perfil}")
+
+    archivo_resumen = os.path.join(directorio_salida, f"{base}_resumen.html")
+    crear_html_inteligente(df, archivo_resumen)
+    print(f"  Resumen HTML:   {archivo_resumen}")
 
     print("\n¡Listo! Todos los ficheros están en:", directorio_salida)
 

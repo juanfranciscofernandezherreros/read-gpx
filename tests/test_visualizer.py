@@ -58,25 +58,29 @@ def test_calcular_distancia_acumulada():
 
 
 def test_procesar_gpx_genera_todos_los_ficheros(sample_gpx_file, tmp_path):
-    """Verifica que procesar_gpx crea CSV, HTML y PNG."""
+    """Verifica que procesar_gpx crea CSV, HTML, PNG y resumen HTML."""
     csv_path = str(tmp_path / "out.csv")
     mapa_path = str(tmp_path / "out.html")
     perfil_path = str(tmp_path / "out.png")
+    resumen_path = str(tmp_path / "out_resumen.html")
 
     rutas = procesar_gpx(
         sample_gpx_file,
         archivo_csv=csv_path,
         archivo_mapa=mapa_path,
         archivo_perfil=perfil_path,
+        archivo_resumen=resumen_path,
     )
 
     assert rutas["csv"] == csv_path
     assert rutas["mapa"] == mapa_path
     assert rutas["perfil"] == perfil_path
+    assert rutas["resumen"] == resumen_path
 
     assert os.path.exists(csv_path), "El CSV no se generó"
     assert os.path.exists(mapa_path), "El mapa HTML no se generó"
     assert os.path.exists(perfil_path), "El perfil PNG no se generó"
+    assert os.path.exists(resumen_path), "El resumen HTML no se generó"
 
 
 def test_procesar_gpx_csv_tiene_datos(sample_gpx_file, tmp_path):
@@ -87,6 +91,7 @@ def test_procesar_gpx_csv_tiene_datos(sample_gpx_file, tmp_path):
         archivo_csv=csv_path,
         archivo_mapa=str(tmp_path / "mapa.html"),
         archivo_perfil=str(tmp_path / "perfil.png"),
+        archivo_resumen=str(tmp_path / "resumen.html"),
     )
 
     df = pd.read_csv(csv_path)
@@ -103,6 +108,7 @@ def test_procesar_gpx_rutas_por_defecto(sample_gpx_file):
         assert rutas["csv"].endswith("_data.csv")
         assert rutas["mapa"].endswith(f"{base}_mapa.html")
         assert rutas["perfil"].endswith(f"{base}_elevacion.png")
+        assert rutas["resumen"].endswith(f"{base}_resumen.html")
     finally:
         for key in rutas:
             if os.path.exists(rutas[key]):

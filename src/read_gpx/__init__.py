@@ -24,6 +24,7 @@ Funciones principales exportadas:
 """
 
 from read_gpx.parser import extraer_datos_gpx
+from read_gpx.smart_html import crear_html_inteligente
 from read_gpx.visualizer import (
     calcular_distancia_acumulada,
     crear_mapa_interactivo,
@@ -39,6 +40,7 @@ __all__ = [
     "calcular_distancia_acumulada",
     "crear_mapa_interactivo",
     "crear_perfil_elevacion",
+    "crear_html_inteligente",
     "procesar_csv",
     "procesar_gpx",
     "__version__",

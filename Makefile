@@ -29,3 +29,8 @@ visualize:
 # Uso: make run-all GPX=actividad.gpx
 run-all:
 	$(VENV)/bin/read-gpx $(GPX)
+
+# Procesa todos los GPX de un directorio.
+# Uso: make run-dir DIR=mis_rutas/ [OUT=resultados/]
+run-dir:
+	bash procesar_directorio.sh $(DIR) $(if $(OUT),-o $(OUT))
