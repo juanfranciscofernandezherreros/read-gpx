@@ -12,20 +12,24 @@ import sys
 from read_gpx.parser import extraer_datos_gpx
 
 
-def main(archivo=None, visualizar=False):
-    """Procesa un archivo GPX y genera un CSV con los datos extraídos.
+def main(archivo=None, visualizar=True):
+    """Procesa un archivo GPX y genera CSV, mapa HTML y perfil de elevación.
 
     Cuando se llama desde la línea de comandos acepta los siguientes
     argumentos posicionales/opcionales::
 
-        read-gpx [archivo.gpx] [--visualize]
+        read-gpx [archivo.gpx] [--no-visualize]
+
+    Por defecto genera los tres ficheros de salida (CSV, HTML y PNG). Pasa
+    ``--no-visualize`` para producir únicamente el CSV.
 
     Args:
         archivo: Ruta al archivo GPX. Si no se proporciona, se usa el
             primer argumento de la línea de comandos o ``actividad.gpx``
             por defecto.
-        visualizar: Si es ``True``, ejecuta también la generación del mapa
-            y el perfil de elevación tras guardar el CSV.
+        visualizar: Si es ``True`` (valor por defecto), ejecuta también la
+            generación del mapa y el perfil de elevación tras guardar el CSV.
+            Pasa ``False`` para generar sólo el CSV.
     """
     args = sys.argv[1:]
 
@@ -33,8 +37,8 @@ def main(archivo=None, visualizar=False):
         positional = [a for a in args if not a.startswith("--")]
         archivo = positional[0] if positional else "actividad.gpx"
 
-    if not visualizar:
-        visualizar = "--visualize" in args
+    if "--no-visualize" in args:
+        visualizar = False
 
     if not os.path.exists(archivo):
         print(f"Error: No se encontró el archivo '{archivo}'")

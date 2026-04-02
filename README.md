@@ -42,6 +42,26 @@ pip install -e .
 
 ## Uso como librería Python
 
+### Pipeline completo directo desde GPX
+
+```python
+from read_gpx import procesar_gpx
+
+# Genera CSV + mapa HTML + perfil PNG en una sola llamada
+rutas = procesar_gpx("mi_actividad.gpx")
+print(rutas["csv"])     # mi_actividad_data.csv
+print(rutas["mapa"])    # mi_actividad_mapa.html
+print(rutas["perfil"])  # mi_actividad_elevacion.png
+
+# Con rutas de salida personalizadas
+rutas = procesar_gpx(
+    "mi_actividad.gpx",
+    archivo_csv="datos.csv",
+    archivo_mapa="mapa.html",
+    archivo_perfil="perfil.png",
+)
+```
+
 ### Extraer datos de un GPX
 
 ```python
@@ -113,10 +133,10 @@ procesar_csv(
 
 ## Uso desde la línea de comandos
 
-### Pipeline completo: GPX → CSV + mapa + perfil
+### Pipeline completo: GPX → CSV + mapa + perfil (comportamiento por defecto)
 
 ```bash
-read-gpx mi_actividad.gpx --visualize
+read-gpx mi_actividad.gpx
 ```
 
 Genera tres ficheros en el directorio actual:
@@ -127,10 +147,10 @@ Genera tres ficheros en el directorio actual:
 | `mi_actividad_mapa.html`     | Mapa interactivo (abrir en el navegador) |
 | `mi_actividad_elevacion.png` | Gráfico del perfil de elevación          |
 
-### Solo extraer datos a CSV
+### Solo extraer datos a CSV (sin generar mapa)
 
 ```bash
-read-gpx mi_actividad.gpx
+read-gpx mi_actividad.gpx --no-visualize
 ```
 
 ### Generar mapa y perfil desde un CSV ya existente
