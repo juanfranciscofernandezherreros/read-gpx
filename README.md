@@ -11,15 +11,24 @@ de dispositivos de fitness (frecuencia cardíaca, cadencia y temperatura).
 
 ## Instalación
 
+Los sistemas Debian/Ubuntu modernos (Python 3.12+) gestionan el entorno de Python de forma externa y no permiten instalar paquetes con `pip` directamente. Usa un entorno virtual:
+
 ```bash
 # Clonar el repositorio
 git clone https://github.com/juanfranciscofernandezherreros/read-gpx.git
 cd read-gpx
 
-# Instalar dependencias
-pip install -r requirements.txt
+# Opción 1 – script automático (crea .venv e instala todo)
+bash setup.sh
+source .venv/bin/activate
 
-# O instalar como paquete
+# Opción 2 – usando make
+make setup
+source .venv/bin/activate
+
+# Opción 3 – manualmente
+python3 -m venv .venv
+source .venv/bin/activate
 pip install .
 ```
 
@@ -60,11 +69,12 @@ El DataFrame resultante contiene las columnas:
 ## Desarrollo
 
 ```bash
-# Instalar dependencias de desarrollo
-pip install -e ".[dev]"
+# Crear el entorno virtual e instalar dependencias de desarrollo
+bash setup.sh          # o: make setup
+source .venv/bin/activate
 
 # Ejecutar tests
-pytest
+pytest                 # o: make test
 ```
 
 ## Estructura del proyecto
